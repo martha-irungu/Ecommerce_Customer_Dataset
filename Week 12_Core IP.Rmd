@@ -1,0 +1,957 @@
+---
+title: "Week 12 Core IP_Advertising Dataset"
+author: "Martha Irungu"
+date: "9/3/2020"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Ia) Specifying the question**
+
+The objective of this study is to use the advertising dataset provided to support a Kenyan entrepreneur identify which individuals are most likely to click on her online advertisement.
+
+
+**b)Defining the Metrics for success**
+
+To meet the objective of the study we will need to do the following:
+
+i)  Find and deal with outliers, anomalies, and missing data within the dataset.
+
+ii) Perform univariate and bivariate analysis.
+
+iii) From the analysis done, share insights and provide a conclusion and recommendation. 
+
+iv) Create a model using supervised learning algorithims to establish which customer is likely to click or not.
+
+
+**c) Understanding the context**
+
+A Kenyan entrepreneur has created an online cryptography course and would want to advertise it on her blog. She currently targets audiences originating from various countries. In the past, she ran ads to advertise a related course on the same blog and collected data in the process. 
+
+Online marketing is the practice of leveraging web-based channels to spread a message about a company’s brand, products, or services to its potential customers. The methods and techniques used for online marketing include email, social media, display advertising, search engine optimization, Google AdWords and more. The objective of marketing is to reach potential customers through the channels where they spend their time reading, searching, shopping, and socializing online.
+
+Widespread adoption of the internet for business and personal use in Kenya and the world at large has generated new channels for advertising and marketing engagement, including those mentioned above. There are also many benefits and challenges inherent to online marketing, which uses primarily digital mediums to attract, engage, and convert virtual visitors to customers.
+
+As entreprenuers adopt these options, it is important for one to establish the impact of the advertisements and one way to do this is to establish chances of potential customers clicking on the ads and what are charateristics of such customers in order to maximize return on investment. This is exatly what this entreprenuer would like advise on.
+
+
+**d) Recording the experimental design**
+
+The following steps were implemented
+
+1.) Business Understanding.
+
+2.) Reading the data.
+
+3.) Data Exploration and cleaning to prepare the data for analysis
+
+4.) Univariate,Bivariate analysis
+
+5.) Modelling using supervised learning algorithims
+
+6.) Conclusion of the findings and recommendation.
+
+
+
+**e)Data Relevance**
+
+The data provided for this study consists of columns with factors likely to influence an individual to either
+click on Ad or not.Since the data was collected when the entreprenuer was running another Ad on the same blog,
+it is relevant to help us establish what kind of audience are likely to click on an Ad or not. 
+
+
+2. **Reading and cheking the data**
+
+##Reading and previewing that dataset
+```{r}
+library("data.table")
+advertising <- fread("/Users/marthairungu/desktop/R/advertising.csv")
+head(advertising)
+```
+
+##Checking the summary of the dataset
+```{r}
+summary(advertising)
+```
+#This shows the summary of numeric variables as tabulated.
+
+
+#Checking the number of rows and columns
+```{r}
+dim(advertising)
+```
+#We observe that the dataset has 1,000 observations and 10 variables
+
+
+#Checking the structure of the dataset
+```{r}
+str(advertising)
+```
+#We observe that out dataset has columns as listed, the datatypes are in numbers, integers and character/string. We will change the columns appropriately.We note that Ad Topic Line, City,Male, country and Clicked on Ad are categorical data whose data type is integer but should be factors.Factors are variables in R which take on a limited number of different values; such variables are often referred to as categorical variables.We will change this to the right datatype format.
+
+
+##Details of the columns
+
+#Daily Time Spent on Site: the daily time spent in minutes and seconds
+
+#Age: Age of the individuals
+
+#Area Income:Income earned in that area
+
+#Daily Internet Usage:Daily usgae of internet
+
+#Ad Topic Line:Topic of the Ad
+
+#City:City the individual comes from
+
+#Male columns: This represents 0: for female and 1: male
+
+#Country: Name of country
+
+#Time stamp:Time in year,month,date,hour,minutes and seconds
+
+#Clicked on Ad:Chances of clicking on the Ad or not. 0: Not click, 1:click on the Ad
+
+
+#Checking the class of the dataset
+```{r}
+class(advertising)
+```
+
+#We will change the datatypes in integer format to factor. We will leave the ones in character datatype as we will still be able to get the information
+```{r}
+advertising$Male <- as.factor(advertising$Male)
+advertising$Clicked_on_Ad <- as.factor(advertising$Clicked_on_Ad)
+```
+
+
+#Spliting the time stamp column into year, Month, day, hour and minute for ease of determining which year,month,day,hour, minute individuals are likely to click on the Ad or not
+```{r}
+advertising$year <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%Y")
+advertising$month <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%m")
+advertising$day <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%d")
+advertising$hour <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%H")
+advertising$minute <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%M")
+```
+
+
+#Printing the head to confirm this has been effected
+head(advertising)
+
+#Check the data structure to estblish the data types of date
+
+str(advertising)
+
+#We note that year,month,day, hour and minute are in character datatype. We will change this to factor
+```{r}
+advertising$year <- as.factor(advertising$year)
+advertising$year <- as.factor(advertising$month)
+advertising$year <- as.factor(advertising$day)
+advertising$year <- as.factor(advertising$hour)
+advertising$year <- as.factor(advertising$minute)
+``` 
+
+
+#Checking for missing values in the dataset
+```{r}
+colSums(is.na(advertising))
+```
+#We note that our dataset does not have missing values. So we will not need to omit or replace them.
+
+#Checking for duplicates in our dataset
+```{r}
+duplicated_rows <- advertising[duplicated(advertising),]
+duplicated_rows
+```
+#We observe that our dataset does not have duplicates
+
+
+3. #**Univariate Graphical Exploratory Data Analysis**
+
+#a). Measures of Central Tendency
+#Checking the mean of numerical Variables
+
+```{r}
+Age.mean <- mean(advertising$Age)
+Age.mean
+```
+#The mean age of individuals is 36 years
+
+```{r}
+Age.median <-median(advertising$Age)
+Age.median
+```
+#The median age of individuals is 35 years
+
+
+#Calculating the mode using the getmode() function for age variable
+```{r}
+
+getmode<- function(v){
+  uniqv<-unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+```
+
+```{r}
+mode.age <- getmode(advertising$Age) 
+print(mode.age)
+```
+#Mode of age is 31
+
+
+#b). Measures of Dispersion
+
+
+#Checking the minimum age
+```{r}
+Age.min <-min(advertising$Age)
+Age.min
+```
+#The minimum age of individual is 19 years
+
+
+#Checking the maximum age
+```{r}
+Age.max <-max(advertising$Age)
+Age.max
+```
+#Maximum age is 61 years
+
+#Checking the range(Difference between highest age and lowest age)
+```{r}
+Age.range <-range(advertising$Age)
+Age.range
+```
+
+
+#Getting the first and third quantile and range using the quantile function
+```{r}
+Age.quantile <-quantile(advertising$Age)
+Age.quantile
+```
+#The age of 25%centile is 29, 50%centile is 35 and 3rd quantile is 42
+
+
+#Finding the variance of age. This is a numerical measure of how the data values is dispersed around the mean.
+```{r}
+Age.variance<-var(advertising$Age)
+Age.variance
+```
+
+
+#Finding the standard deviation of  age. 
+```{r}
+Age.sd<-sd(advertising$Age)
+Age.sd
+```
+#Standard deviation of age is 8.78, this is a measure of spread around the mean. 
+
+
+#To get measures of central tendancy and dispersion for the other numerical varibles, we can use the summary function.
+```{r}
+summary(advertising)
+```
+
+#c). Univariate analysis
+
+#Plotting boxplot for Age variable
+```{r}
+boxplot(advertising$Age)
+```
+#We observe that age has no outliers
+
+
+#Plotting boxplot for Daily Internet Usage variable
+```{r}
+boxplot(advertising$'Daily Internet Usage')
+```
+#Daily Internet Usage has no outliers
+
+
+#Plotting boxplot for Area Income variable
+```{r}
+boxplot(advertising$'Area Income')
+```
+#Area Income has some outliers
+
+
+#Checking the number of male and female individuals represented
+```{r}
+Male_table <- table(advertising$Male)
+Male_table
+```
+#We observe that we have 519 female and 481 Male in the dataset
+
+
+#Checking the number of those who clicked on the Ad and those individuals who did not click
+```{r}
+Clicked_on_Ad_table <- table(advertising$`Clicked on Ad`)
+Clicked_on_Ad_table
+```
+#We observe that individuals who clicked on Ad 500, same as those who did not click on the Ad
+
+
+
+#Plotting barplot frequency by country
+```{r}
+Country <-advertising$Country
+Country_frequency <-table(Country)
+barplot(Country_frequency,xlab='Country',ylab='Frequency')
+```
+#For better visualization we can check the top 6 Countries that occur freequently
+
+```{r}
+	library(plyr)
+	frequency_Country<- count(advertising$Country)
+	frequency_Country_head <- head(arrange(frequency_Country, desc(freq)))
+  frequency_Country_head
+
+```
+#Czech Republic and France have the highest frequency
+
+
+#Plotting frequency by city
+```{r}
+City <-advertising$City
+City_frequency <-table(City)
+barplot(City_frequency,xlab='City',ylab='Frequency')
+
+```
+
+
+#For better visualization we can check the top 6 Cities that occur frequently
+```{r}
+frequency_City<- count(advertising$City)
+	frequency_City_head <- head(arrange(frequency_City, desc(freq)))
+  frequency_City_head
+```
+Lisamoth and Williamsport are top 2 cities
+
+
+
+#Histogram for Area Income
+```{r}
+hist(advertising$`Area Income`, col=blues9,breaks=25,xlab="Area Income",main="Histogram of Area Income")
+```
+#Area income is negatively skewed and most of the area income is about 6000.
+
+
+
+#Histogram- Age of individuals
+```{r}
+hist(advertising$`Age`, col=blues9,breaks=25,xlab="Age",main="Histogram of Age")
+
+```
+#Age distribution is positively skewed with median age being 35years and mean age 36years.
+
+
+
+#c). Bivariate analysis
+
+#Plotting boxplot for Area Income and Age variables
+```{r}
+boxplot(advertising$'Area Income'~advertising$Age,xlab="Age", ylab="Area Income", notch=FALSE, col=c("blue","green","yellow"))
+```
+#We note that Area income increases with increase in age and begins to decline from age 43. We observe outliers in area income below the age of 40.
+
+
+#Plotting boxplot for Daily Time Spent on Site and Male variables
+```{r}
+boxplot(advertising$'Daily Time Spent on Site'~advertising$Male,xlab="Male", ylab="Daily Time Spent on Site",notch=FALSE, col=c("blue","green"))
+```
+#Time spent on the internet for both male and female is more or less the same
+
+
+#Plotting boxplot for Daily Time Spent on Site and Male variables
+```{r}
+boxplot(advertising$'Daily Internet Usage'~advertising$Male,xlab="Male", ylab="Daily Internet Usage",notch=FALSE, col=c("blue","green"))
+```
+#Daily internet usage for male is slightly higher than that of female with no outliers.
+
+
+#Plotting relationship of those who clicked on the Ad by Gender using boxplot
+```{r}
+boxplot(advertising$'Clicked on Ad'~advertising$Male,xlab="Male", ylab="Clicked on Ad",notch=FALSE, col=c("blue","green"))
+```
+#From the above we observe that the number of male and female who clicked on the Ad are more or less the same.Take a 50/50 kind of representation, hence either gender has chances of clicking on the Ad.
+
+
+#The correlation between age and time spent on the site
+```{r}
+scatter.smooth(advertising$Age,advertising$`Daily Time Spent on Site`,main="Plot Age to Daily Time Spent on Site Relationship",xlab = 'Age',ylab = 'Daily_Time_Spent_on_Site')
+```
+#We observe that daily time spent site is higher with younger individuals, this time declines with age. We observe a peak at age 30years.
+
+
+#Plotting relationship between Age and Daily Internet Usage
+```{r}
+scatter.smooth(advertising$Age,advertising$`Daily Internet Usage`,main="Plot Age to Daily Internet Usage Relationship",xlab = 'Age',ylab = 'Daily Internet Usage')
+```
+#We observe that Daily Internet Usage declines with increase in age.
+
+
+#Checking the relationship gender and clicking on the ad
+```{r}
+scatter.smooth(advertising$Male,advertising$`Clicked on Ad`,main="Plot Male to Clicked on Ad Relationship",xlab = 'Male',ylab = 'Clicked on Ad')
+```
+#Gender is not a key determinant when it comes to clicking on the Ad both male and female have equal chances of clicking on the Ad.
+
+
+
+#Checking clicking on Ad by Daily Time Spent on Site
+```{r}
+scatter.smooth(advertising$`Daily Time Spent on Site`,advertising$`Clicked on Ad`,main="Plot Daily Time Spent on Site to Clicked on Ad Relationship",xlab = 'Daily Time Spent on Site',ylab = 'Clicked on Ad')
+```
+#The lower the Daily time spent on Site the higher the chances of clicking on Ad.
+
+
+
+#Checking relationship clicking on Ad to Area Income
+```{r}
+scatter.smooth(advertising$`Area Income`,advertising$`Clicked on Ad`,main="Plot Area Income to Clicked on Ad Relationship",xlab = 'Area Income',ylab = 'Clicked on Ad')
+```
+#The lower the Area Income the higher the chances of clicking on Ad.As income increases the probability of clicking on Ad declines.
+
+
+
+```{r}
+scatter.smooth(advertising$`Daily Internet Usage`,advertising$`Clicked on Ad`,main="Daily Internet Usage to Clicked on Ad Relationship",xlab = 'Daily Intenet Usage',ylab = 'Clicked on Ad')
+```
+#We observe that the lower the daily internet Usage the higher the chances of clicking on the Ad.
+
+```{r}
+input <- cor(advertising[,c("Daily Internet Usage","Area Income","Daily Time Spent on Site","Age","Clicked on Ad")])
+round(input,2)
+```
+
+#Checking the individuals who clicked the Ad by year
+```{r}
+year.table <- table(advertising$'Clicked on Ad', advertising$year)
+names(dimnames(year.table)) <- c("Clicked on Ad", "year")
+year.table
+
+```
+#We observe that year 2002 and 2007 achieved the highest click on the Ad with 14 clicks
+
+
+
+#Checking the those who clicked the Ad by month
+```{r}
+month.table <- table(advertising$'Clicked on Ad', advertising$month)
+names(dimnames(year.table)) <- c("Clicked on Ad", "month")
+month.table
+```
+#We observe that most the highest number of click on the Ad were achieved in the month of February with 83 clicks followed by May with 79 clicks.
+
+```{r}
+hour.table <- table(advertising$'Clicked on Ad', advertising$hour)
+names(dimnames(hour.table)) <- c("Clicked on Ad", "hour")
+hour.table
+```
+#We observe that the 9th hour achieved most clicks with 29clicks followed but the the 1st hour.
+
+
+```{r}
+minute.table <- table(advertising$'Clicked on Ad', advertising$minute)
+names(dimnames(minute.table)) <- c("Clicked on Ad", "minute")
+minute.table
+```
+#the 7th minute achieved the highest number of clicks on the Ad.
+
+
+```{r}
+library(ggplot2)
+ggplot(advertising, aes(x='Clicked on Ad', y='year')) + geom_boxplot()
+
+```
+**4) Implementing supervised learning with r**
+
+**a)SVM in r**
+
+```{r}
+str(advertising)
+```
+
+#Change the class label column to factor
+```{r}
+advertising$`Clicked on Ad` = factor(advertising$`Clicked on Ad`)
+                          
+```
+
+#Checking if this has been effected
+```{r}
+str(advertising)
+
+```
+
+
+#check column names
+```{r}
+colnames(advertising)
+```
+
+```{r}
+
+names(advertising)[10]<-'click'
+
+```
+
+
+
+
+#Spliting the time stamp column into year, Month, day, hour and minute for ease of determining which year,month,day,hour, minute individuals are likely to click on the Ad or not
+```{r}
+advertising$year <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%Y")
+advertising$month <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%m")
+advertising$day <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%d")
+advertising$hour <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%H")
+advertising$minute <- format(as.POSIXct(advertising$Timestamp, format="%Y-%m-%d %H:%M:%S"), "%M")
+```
+
+
+#Printing the head to confirm this has been effected
+head(advertising)
+
+#Check the data structure to establish the data types of date
+str(advertising)
+
+
+#We note that year,month,day, hour and minute are in character datatype. We will change this to factor
+```{r}
+advertising$year <- as.factor(advertising$year)
+advertising$year <- as.factor(advertising$month)
+advertising$year <- as.factor(advertising$day)
+advertising$year <- as.factor(advertising$hour)
+advertising$year <- as.factor(advertising$minute)
+head(advertising)
+
+```
+#Change the datatype of some variables to numeric and drop the caterical columns
+```{r}
+advertising$'Male' <-as.numeric(advertising$'Male')
+advertising$'Country' <-as.numeric(advertising$'Country')
+advertising$'year' <-as.numeric(advertising$'year')
+advertising$'month' <-as.numeric(advertising$'month')
+advertising$'day' <-as.numeric(advertising$'day')
+advertising$'hour' <-as.numeric(advertising$'hour')
+advertising$'minute' <-as.numeric(advertising$'minute')
+advertising$Timestamp <- NULL#remove the column as we no longer need it
+advertising$'Ad Topic Line' <- NULL
+advertising$City <- NULL
+advertising$Country <- NULL
+str(advertising)
+```
+
+
+#assigning click on Ad column to last column
+```{r}
+advert<-advertising[ , c(1,2,3,4,5,7,8,9,10,11,6)] 
+head(advert)
+```
+
+
+
+
+```{r}
+library(caret) 
+intrain <- createDataPartition(y = advert$`click`, p= 0.7, list = FALSE)
+training <- advert[intrain,]
+testing <- advert[-intrain,] 
+head(training)
+```
+
+
+
+#We check the dimensions of out training dataframe and testing dataframe
+```{r}
+dim(training); 
+dim(testing);
+```
+
+#We then clean the data using the anyNA() method that checks for any null values.
+```{r}
+anyNA(advertising)
+```
+
+#Then check the summary of our data by using the summary() function
+```{r}
+summary(advert) 
+```
+#From our output above, we can see that the values of the various variables are not standardized. 
+
+
+#Training SVM model
+
+#Before we train our model we will need to control all the computational overheads. 
+#We will implement this through the trainControl() method. 
+#This will allow us to use the train() function provided by the caret package. 
+#The trainControl method will take three parameters:
+#a)The “method” parameter defines the resampling method, 
+#in this demo we’ll be using the repeatedcv or the repeated cross-validation method.
+#b)The next parameter is the “number”, this basically holds the number of resampling iterations.
+#c)The “repeats ” parameter contains the sets to compute for our repeated cross-validation. 
+# We are using setting number =10 and repeats =3
+```{r}
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+svm_Linear <- train(click ~., data = training, method = "svmLinear",
+trControl=trctrl,
+preProcess = c("center", "scale"),
+tuneLength = 10)
+```
+
+
+```{r}
+svm_Linear
+```
+
+
+#We can use the predict() method for predicting results as shown below. 
+#We pass 2 arguements, our trained model and our testing data frame.
+```{r}
+test_pred <- predict(svm_Linear, newdata = testing)
+test_pred
+```
+
+
+
+```{r}
+confusionMatrix(table(test_pred, testing$click))
+
+```
+#Our SVM model achieved an accuracy level of 96.7% which is good, with most of the clicks classified right save for 10 clicks that were misclassified.
+
+
+
+**b)Decision Trees in r**
+
+
+install.packages("rpart") 
+install.packages("rpart.plot")
+
+```{r}
+library(rpart)
+```
+
+
+
+#splitting our data into training and testing sets
+#we will split it 90:10
+```{r}
+library(rpart)
+data_intraining <- createDataPartition(y = advert$click, p = 0.9, list = FALSE)
+training <- advert[data_intraining,]
+testing <- advert[-data_intraining,]
+```
+
+
+
+#fitting and training the model using the decision tree classifier
+```{r}
+library(rpart)
+library(rpart.plot)
+fit <- rpart(click ~ ., data = training, method = 'class')
+rpart.plot(fit, extra = 106)
+ 
+In [90]:
+# making predictions
+prediction <- predict(fit, testing, type = 'class')
+In [91]:
+# comparing predicted values to actual results   
+table_dec <- table(testing$click, prediction)
+table_dec
+
+
+```
+       
+       
+       
+#Predictions
+```{r}
+prediction <- predict(fit, testing, type = 'class')
+prediction
+```
+
+
+install.packages("gmodels")
+library(gmodels)
+
+#comparing predicted values to actual results
+```{r}
+table_dec <- table(testing$click, prediction)
+table_dec
+
+```
+ #From the confusion matrix the model had performe well with most of the data points classified right except 7 that were misclassified.      
+       
+    
+
+#Checking the performance of the model using accuracy metric
+```{r}
+model_accuracy <- sum(diag(table_dec)) / sum(table_dec)
+print(paste('Accuracy:', model_accuracy))
+```
+#We observe that the decision tree model accuracy is 96.5% this is good performance, its slightly lower than the performance that SVM achieved.
+
+
+
+**c)Naive Bayes with r**
+
+
+#printing the head of the dataset
+```{r}
+head(advert)
+
+```
+#Change class label to factor
+
+```{r}
+advert$click<-as.factor(advert$click)
+str(advert)
+```
+
+```{r}
+library(psych)
+data(advert)
+describe(advert)
+```
+install.packages("caret")
+library(caret)
+
+install.packages('tidyverse')
+library(tidyverse)
+
+install.packages('ggplot2')
+library(ggplot2)
+
+install.packages('caret')
+library(caret)
+
+install.packages('caretEnsemble')
+library(caretEnsemble)
+
+install.packages('psych')
+library(psych)
+
+install.packages('Amelia')
+library(Amelia)
+
+install.packages('mice')
+library(mice)
+
+install.packages('GGally')
+library(GGally)
+
+install.packages('rpart')
+library(rpart)
+
+install.packages('randomForest')
+library(randomForest)
+
+install.packages('lattice')
+library(lattice)
+
+install.packages('Rcpp')
+library(Rcpp)
+
+install.packages("numDeriv")
+library(numDeriv)
+
+install.packages("caret")
+library(caret)
+
+library(lattice)
+library(ggplot2)
+
+
+
+#Splitting data into training and test data sets
+```{r}
+set.seed(1234)
+ind <- sample(2,nrow(advert),replace = T, prob = c(0.8,0.2))
+train <-advert[ind == 1,]
+test <- advert[ind ==2,]
+
+```
+
+#building Naive Bayes Model
+```{r}
+library(e1071)
+model <-naiveBayes(click~., data=train)
+model
+```
+#We observe that 49% of train data did not click on the Ad and 50% clicked
+#Then we have mean and standard deviation of each variable for customers who clicked and those that did not click
+
+
+`
+
+#Model Evalution
+#Predicting our testing set
+```{r}
+
+```
+
+
+**d)implementing regression model**
+
+
+#Previewing the head
+```{r}
+head(advert)
+
+```
+
+#Change the label to numeric
+```{r}
+advert$click<-as.numeric(advert$click)
+```
+
+
+```{r}
+# Applying the lm() function.
+multiple_lm <- lm(click ~ ., advert)
+```
+
+```{r}
+# Generating the anova table
+anova(multiple_lm)
+
+```
+#The table tabulates the analysis of degree of freedom,sum of squared mean, mean sq and the p value of the variables
+
+```{r}
+
+# Then performing our prediction 
+prediction <- predict(multiple_lm, advert)
+
+```
+
+#Printing out our result
+```{r}
+prediction
+```
+
+
+
+
+
+
+*e) KNNsupervised learning with r*
+
+```{r}
+head(advert)
+```
+
+#Randomizing the rows, creates a uniform distribution of 1000
+```{r}
+set.seed(1234)
+random <- runif(1000)
+advert_random <- advert[order(random),]
+```
+
+
+
+#Selecting the first 6 rows from advert_random
+```{r}
+head(advert_random)
+
+```
+
+```{r}
+# Normalizing the numerical variables of the data set. Normalizing the numerical values is really effective for algorithms, 
+# as it provides a measure from 0 to 1 which corresponds to min value to the max value of the data column.
+# We define a normal function which will normalize the set of values according to its minimum value and maximum value.
+normal <- function(x) (
+ return( ((x - min(x)) /(max(x)-min(x))) )
+)
+normal(1:9)
+advert_new <- as.data.frame(lapply(advert_random[,-9], normal))
+summary(advert_new)
+```
+
+
+```{r}
+# Create test and train data sets
+
+train <- advert_new[1:800,]
+test <- advert_new[801:1000,]
+train_label <- advert_random[1:800,9]
+test_label<- advert_random[801:1000,9]
+
+```
+
+
+```{r}
+# Now we can use the K-NN algorithm. Lets call the "class" package which contains the K-NN algorithm.
+# We then have to provide 'k' value which is no of nearest neighbours(NN) to look for 
+# in order to classify the test data point.
+# Lets build a model on it; cl is the class of the training data set and k is the no of neighbours to look for 
+# in order to classify it accordingly.
+
+library(class)    
+require(class)
+model <- knn(train= train,test=test,cl= train_label,k=10)
+table(factor(model))
+table(test_label,model)
+
+```
+
+
+#this function divides the correct predictions by total number of predictions that tell us how accurate the model is.
+```{r}
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+ accuracy(table)
+ 
+```
+
+
+
+
+# 5.Conclusion and Recommendation
+Based on the findings from our analysis we conclude the following:
+
+Gender is not really a key factor to influence clicking on the Ad or not, we established the number of female and those of male that clicked the Ad was more or less the same. So the Ad can target both genders.
+
+We noted that Daily time spent on the site and Daily internet Usage is higher with younger individuals. These 2 variables decrease as age increases. Therefore age is a key factor to consider for success of the Ad. Therefore since we established that those who spend less time are likely to click on the Ad, we conclude that the Ad should target older individuals. 
+
+Income is key factor to consider. From our findings, those with lower are income have higher chances of clicking on the Ad than those with higher area income levels. The Ad should therefore target those with lower are income.
+
+Those with lower Daily internet Usage and lower Daily time spent on site have higher chances of clicking on the Ad. The probability of clicking decreases with increase in the two variables. Therefore the individuals who spend less time and use lower internet should be targeted.
+
+Year 2002 and 2007 achieved the highest clicks. This can be investigated further establish what was unique with these 2 years that can be applied into the future.
+
+The month of February achieved moset click followed by the month of May, This could be contributed by May being a school holiday month and February could be as a result of it is not a very busy month, so individuals can afford the time.
+
+The 9th hour and the 1st achieved most clicks, the entrepreneur can target scheduling these hours when placing the Ad. 
+
+Zcheck republic and France are the top 2 countries that appreared more frequently these can and say 8 more can be targeted with the Ad. 
+If the entrepreneur considers these factors, they will achieve better performance with getting more individuals clicking on the Ad.
+
+*conclusion on modelling*
+
+
+SVM and Decision tree algorithims performed best with accuracy score of 96.7 and 96.5% respectively.Naive bayes model more offered the probabilities if an individual is likely to click on the Ad or not. Linear regression didn't do well since this is more a classification problem than a regression problem. I encountered errors when implementing the knn model, its performance will be compared with the others when successful.
+
+
+*Followup questions*
+
+
+
+Did we have the right data? Yes
+
+
+Did we achieve the objective of the study? Yes, we did as were able to come up with characteristics of customers who are likely to click on the ad or not and we believe that this entreprenuer is well advised now.
+
+
+
+
+
+
+
