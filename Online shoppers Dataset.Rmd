@@ -1,0 +1,626 @@
+---
+title: "Online shoppers Dataset"
+author: "Martha Irungu"
+date: "9/11/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Ia) Specifying the question**
+
+The objective of this study is to support the brand’s Sales and Marketing team of Kira Plastinina (a Russian brand) to understand their customer’s behavior from the Ecommerce customer data that they have collected over the past year.
+
+**b)Defining the Metrics for success**
+
+To meet the objective of the study we will need to do the following:
+
+i)  Perform clustering stating insights drawn from your analysis and visualizations.
+
+ii) Upon implementation, provide comparisons between i.e. K-Means clustering vs Hierarchical clustering highlighting the strengths and limitations of each approach in the context of your analysis. 
+iii) Based on the analysis and clustering implemented, provide the brand’s Sales and Marketing team of Kira Plastinina with the characteristics of customer groups of their products.
+
+**c) Understanding the context**
+
+Kira Plastinina is a Russian brand that is sold through a defunct chain of retail stores in Russia, Ukraine, Kazakhstan, Belarus, China, Philippines, and Armenia. This fashion brand owner was born in Moscow whose father invested in the business for her love of fashion. In 2007, the first Kira Plastinina store opened in Moscow, Plastinina introduced her first collection and became one of the youngest fashion designers in the world. Since then, the company has opened over 300 stores in Russia and Common Wealth of Independent States. In 2008, the Company made an unsuccessful attempt to enter the U.S. market. 
+Throughout her career, Plastinina has presented her fashion collections during Rome, Milan, New York and Moscow fashion weeks. Her brand has been worn by many celebrities including Paris Hilton,[3] Lindsay Lohan,[4] Georgia May Jagger,[5] Karlie Kloss,[6] Rowan Blanchard, Lyndsy Fonseca, Victoria Justice, and many others. 
+
+This being a global teenage fashion designer, and having ecommerce options where customers can login, select and make a decision to make an order to purchase the fashion wear, it is critical for the entrepreneur to understand the characteristics of her customers. We will be investigating factors like region they come from, the browser, informational duration among other factors to establish how many clusters they belong to and what are the characteristics of specific clusters.
+
+
+**d) Recording the experimental design**
+
+The following steps were implemented
+
+1.) Business Understanding.
+
+2.) Reading the data.
+
+3.) Perform Data Cleaning
+
+4.) Perform Exploratory Data analysis (Univariate, Bivariate &Multivariate)
+
+5.) Implementing the Solution
+
+6.) Challenge the Solution
+
+7.) Follow up Questions
+
+
+**e)Data Relevance**
+
+The data provided for this study was collected in the past year. It consists of variables that can define characteristics of customers that visit the Ecommerce website. This is relevant data as it relates to online shoppers who visit the site. The brand exists as per link below: The data can therefore be relied on to help us establish the characteristics of customers who visit the site and their intentions. 
+
+https://en.wikipedia.org/wiki/Kira_Plastinina   
+
+**2)Previewing and reading the data**
+
+#Loading the data and previewing the head
+```{r}
+library("data.table")
+online_shoppers <- fread("/Users/marthairungu/desktop/online_shoppers_intention.csv")
+head(online_shoppers)
+```
+
+#Checking the dimension of the dataset
+```{r}
+dim(online_shoppers)
+```
+#The dataset has 12,330 observations and 18 variables
+
+
+#Checking the structure of the dataset
+```{r}
+str(online_shoppers)
+```
+#The variables have datatypes in interger,number, character and logical datatypes. We will convert the varibales as appropropriate as we analyse the data.
+
+#Checking the summary of the dataset
+```{r}
+summary(online_shoppers)
+```
+#The summary of the numerical variables is as tabulated
+
+
+**3)Data Cleaning**
+
+
+#Getting column names
+```{r}
+colnames(online_shoppers)
+```
+
+#For ease of working with the data, we will change column names
+```{r}
+names(online_shoppers)[1]<-'admin'
+names(online_shoppers)[2]<-'admin_dur'
+names(online_shoppers)[3]<-'info'
+names(online_shoppers)[4]<-'info_dur'
+names(online_shoppers)[5]<-'prod'
+names(online_shoppers)[6]<-'prod_dur'
+names(online_shoppers)[7]<-'bouncerates'
+names(online_shoppers)[8]<-'exitrates'
+names(online_shoppers)[9]<-'pagevalues'
+names(online_shoppers)[10]<-'specialday'
+names(online_shoppers)[11]<-'month'
+names(online_shoppers)[12]<-'ops_systems'
+names(online_shoppers)[13]<-'browser'
+names(online_shoppers)[14]<-'region'
+names(online_shoppers)[15]<-'traffic_type'
+names(online_shoppers)[16]<-'visitor_type'
+names(online_shoppers)[17]<-'weekend'
+names(online_shoppers)[18]<-'revenue'
+
+#Confirming the variable names have been changed
+colnames(online_shoppers)
+```
+
+
+
+#Description of the variables
+
+#Administrative", "Administrative Duration", "Informational", "Informational Duration", "Product Related" and "Product Related Duration" represents the number of different types of pages visited by the visitor in that session and total time spent in each of these page categories. 
+
+#The "Bounce Rate", "Exit Rate" and "Page Value" features represent the metrics measured by "Google Analytics" for each page in the e-commerce site. 
+
+#The value of the "Bounce Rate" feature for a web page refers to the percentage of visitors who enter the site from that page and then leave ("bounce") without triggering any other requests to the analytics server during that session. 
+
+#The value of the "Exit Rate" feature for a specific web page is calculated as for all pageviews to the page, the percentage that was the last in the session.
+
+#The "Page Value" feature represents the average value for a web page that a user visited before completing an e-commerce transaction. 
+
+#The "Special Day" feature indicates the closeness of the site visiting time to a specific special day (e.g. Mother’s Day, Valentine's Day) in which the sessions are more likely to be finalized with the transaction. The value of this attribute is determined by considering the dynamics of e-commerce such as the duration between the order date and delivery date. For example, for Valentina’s day, this value takes a nonzero value between February 2 and February 12, zero before and after this date unless it is close to another special day, and its maximum value of 1 on February 8. 
+
+#Month-month visited
+#visitor type-Type of visitor;new, returning or other
+#Revenue-customer with revenue or without
+
+
+#Checking for missing values
+```{r}
+colSums(is.na(online_shoppers))
+```
+#We note that our dataset has missing values in the specific columns as per the summary.Most of the columnns have 14 missing records.
+
+
+```{r}
+head(online_shoppers)
+```
+
+#Dealing with missing values
+#Since the number of records are not too many most of the columns have 14 out of the 12,330 records, we will opt to omit them.
+```{r}
+clean_online_shoppers <- na.omit(online_shoppers)
+colSums(is.na(clean_online_shoppers))
+```
+
+
+#Changing the variables to the right datatypes 
+```{r}
+clean_online_shoppers$month<-as.factor(clean_online_shoppers$month)
+clean_online_shoppers$ops_systems <-as.factor(clean_online_shoppers$ops_systems)
+clean_online_shoppers$browser<-as.factor(clean_online_shoppers$browser)
+clean_online_shoppers$region<-as.factor(clean_online_shoppers$region)
+clean_online_shoppers$traffic_type<-as.factor(clean_online_shoppers$traffic_type)
+clean_online_shoppers$visitor_type<-as.factor(clean_online_shoppers$visitor_type)
+clean_online_shoppers$weekend<-as.factor(clean_online_shoppers$weekend)
+clean_online_shoppers$revenue<-as.factor(clean_online_shoppers$revenue)
+str(clean_online_shoppers)
+```
+#We note that Month variabke has 10 levels,Operating system 8 levels,Browser 13 levels, Region 9levels,Traffic Type 20 levels, visitor type 3 levels, Weekend and revenue varibles have 2 levels each.
+
+#Checking for duplicates
+```{r}
+duplicated_rows <- clean_online_shoppers[duplicated(clean_online_shoppers),]
+duplicated_rows
+```
+#We note that our dataset has no duplicates
+
+
+**4)Univariate, Bivariate Analysis**
+
+#measures of central tendancy and dispersion
+
+
+
+```{r}
+library(psych)
+data(clean_online_shoppers)
+describe(clean_online_shoppers)
+```
+#The mean,standard deviation, median,min,max, range, skew,kurtosis of the numeric variables are as tabulated.We note that product duration and admin duration have very high standard deviation, meaning the datapoints vary greatly.
+
+
+#plotting boxplots for all the numerical variables
+```{r}
+par(mfrow=c(2,2))
+boxplot((clean_online_shoppers$admin),horizontal=TRUE,col='light blue', main='boxplot of Administrative')
+boxplot((clean_online_shoppers$admin_dur), horizontal=TRUE,col='light green', main='boxplot of Administrative Duration')
+boxplot((clean_online_shoppers$info),horizontal=TRUE,col='light blue', main='boxplot of informational')
+boxplot((clean_online_shoppers$info_dur), horizontal=TRUE,col='light green', main='boxplot of Informational Duration')
+boxplot((clean_online_shoppers$prod),horizontal=TRUE, col='pink',main='boxplot of Product Related')
+boxplot((clean_online_shoppers$prod_dur),horizontal=TRUE, col='black', main='boxplot of Product Related Duration')
+boxplot((clean_online_shoppers$bouncerates), horizontal=TRUE,col='orange', main='boxplot of BounceRates')
+boxplot((clean_online_shoppers$exitrates),horizontal=TRUE,col='light blue', main='boxplot of ExitRates')
+boxplot((clean_online_shoppers$pagevalues),horizontal=TRUE, col='pink',main='boxplot of pagevalues')
+boxplot((clean_online_shoppers$`specialday`), horizontal = TRUE, col = 'blue', main = "boxplot of SpecialDay")
+#boxplot((clean_online_shoppers$`region`), horizontal = TRUE, col = 'purple', main = "boxplot of region")
+#boxplot((clean_online_shoppers$`browser`), horizontal = TRUE, col = 'red', main = "boxplot of Browser")
+#boxplot((clean_online_shoppers$'traffic_type'), horizontal = TRUE, col = 'yellow', main = "boxplot of TrafficType")
+#boxplot((clean_online_shoppers$ops_systems), horizontal =TRUE,col= 'green', main ='boxplot of Operating System')
+
+```
+#We observe that most of our data has outliers. We will opt not to remove them, since we are trying to understand the characteristics of customers who shop from Ecommerce,leaving them might help us to unearth the different patterns/clusters of the online shoppers.
+
+
+
+#Checking the number of True and False values represented in revenue variable as this is our class label
+```{r}
+revenue_table <- table(clean_online_shoppers$revenue)
+revenue_table
+```
+#We have 1,908 customers with revenue and 10,408 without revenue
+
+
+#Finding correlation amongst the numeric variables
+#fetching all the numerical variables from the advertising dataset
+```{r}
+admin<-clean_online_shoppers$admin   
+admin_dur<-clean_online_shoppers$admin_dur 
+info<-clean_online_shoppers$info 
+info_dur<-clean_online_shoppers$info_dur  
+prod<-clean_online_shoppers$prod
+prod_dur<-clean_online_shoppers$prod_dur
+bouncerates<-clean_online_shoppers$bouncerates
+exitrates<-clean_online_shoppers$exitrates
+pagevalues<-clean_online_shoppers$pagevalues
+specialday<-clean_online_shoppers$specialday
+#ops_systems<-clean_online_shoppers$ops_systems
+```
+
+
+#Creating a dataset with numeric variables
+```{r}
+numeric_variables<- data.frame(admin, admin_dur, info, info_dur,prod,prod_dur,bouncerates,exitrates,pagevalues,specialday)
+head(numeric_variables)    #previewing the dataframe
+```
+#Previewing the correlation matrix
+```{r}
+corr <- round(cor(numeric_variables), 1)
+head(corr[, 1:10])   #previewing the matrix
+```
+#We observe that admin has a positive correlation of 0.6 with admin duration and 0.4 with Product duration. Info is positively correlated with info duration at 0.6, production and production duration have a positive correlation of 0.9
+
+
+install.packages('ggplot2')
+library(ggplot2)
+
+
+
+```{r}
+hist(clean_online_shoppers$bouncerates, col=blues9,breaks=25,xlab="bouncerates",main="Histogram of bouncerates")
+
+```
+#We observe that bounce rates is positively skewed to the right
+
+
+#Histogram of admin duration
+```{r}
+hist(clean_online_shoppers$admin_dur, col=blues9, breaks=25,xlab='admin_dur',main="Histogram of admin_duration")
+```
+#Admin duration is positively skewed 
+
+install.packages('ggplot2')
+library(ggplot2)
+
+install.packages('ggplot')
+
+#Relationship between specialday and revenue
+```{r}
+library(ggplot2)
+ggplot(data = clean_online_shoppers) + 
+  geom_bar(mapping = aes(x = specialday, fill = revenue), position = "dodge")
+```
+#We note that specialday with zero values have higher revenue than those with non zero values.
+#
+
+#Checking the relationship between month and the class label revenue
+```{r}
+ggplot(data = clean_online_shoppers) + 
+  geom_bar(mapping = aes(x = month, fill = revenue), position = "dodge")
+```
+#The month of November have the highest revenue, while the month of may registered highest non revenue.
+
+#Checking the relationship between product duration and the class label revenue
+```{r}
+ggplot(data = clean_online_shoppers) + 
+  geom_bar(mapping = aes(x = prod_dur, fill = revenue), position = "dodge")
+```
+
+#Checking the relationship between browser and the class label revenue
+```{r}
+ggplot(data = clean_online_shoppers) + 
+  geom_bar(mapping = aes(x = browser, fill = revenue), position = "dodge")
+```
+#We observe that browser values of 2 registered the highest non revenue and revenue status.
+
+
+
+#Checking the relationship between visitor type and the class label revenue
+```{r}
+ggplot(data = clean_online_shoppers) + 
+  geom_bar(mapping = aes(x = visitor_type, fill = revenue), position = "dodge")
+```
+#We observe that returning visitor type registered the highest non revenue and highest revenue status.
+
+
+#Checking the relationship between region and the class label revenue
+```{r}
+ggplot(data = clean_online_shoppers) + 
+  geom_bar(mapping = aes(x = region, fill = revenue), position = "dodge")
+```
+#The region with value of 1 registered highest values of non revenue and revenue status.
+
+
+#Checking the relationship between traffic type and the class label revenue
+```{r}
+library(ggplot2)
+ggplot(data = clean_online_shoppers) + 
+  geom_bar(mapping = aes(x = traffic_type, fill = revenue), position = "dodge")
+```
+#We observe the the traffic type with a value of 2 registered the highest non revenue status and highest revenue status.
+
+
+
+#scatter plots to show the relationship of various variables
+```{r}
+par(mfrow=c(2,2))
+plot(clean_online_shoppers$prod,clean_online_shoppers$prod_dur, main="Scatterplot of product vs prod_dur")
+plot(clean_online_shoppers$info,clean_online_shoppers$info_dur, main="Scatterplot of info vs info_dur")
+plot(clean_online_shoppers$specialday, clean_online_shoppers$traffictype, main="Scatter plot of specialday vs traffictype")
+plot(clean_online_shoppers$bouncerates, clean_online_shoppers$exitrates, main= "Scatter plot of bouncerates vs exitrates")
+```
+#We observe a positive correction between boucerates and exit rates and product and product duration.
+
+**5)implementing unsupervised learning algorithim**
+
+
+#a)Unsupervised learning-with kmeans clustering
+K-means clustering is a clustering algorithm that is commonly used for partitioning a given data set into a set of k groups (i.e. k clusters), where k represents the number of groups pre-specified. The algorithm tries to find groups by minimizing the distance between the observations, called local optimal solutions. The distances are measured based on the coordinates of the observations
+
+Advantages ofkmeans
+
+#Easy to implement 
+#With a large number of variables, K-Means may be computationally faster than hierarchical clustering (if K is small). 
+#k-Means may produce Higher clusters than hierarchical clustering 
+#An instance can change cluster (move to another cluster) when the centroids are recomputed. 
+
+Disadvantages kmeans
+
+#Difficult to predict the number of clusters (K-Value) 
+#Initial seeds have a strong impact on the final results 
+#Sensitive to scale: rescaling your datasets (normalization or standardization) will completely change results.
+
+```{r}
+#checking stucture of the data
+str(clean_online_shoppers)
+```
+
+
+
+#changing the datatype of variables to numeric for ease of manipulation.
+```{r}
+clean_online_shoppers$month<-as.numeric(clean_online_shoppers$month)
+clean_online_shoppers$ops_systems <-as.numeric(clean_online_shoppers$ops_systems)
+clean_online_shoppers$browser<-as.numeric(clean_online_shoppers$browser)
+clean_online_shoppers$region<-as.numeric(clean_online_shoppers$region)
+clean_online_shoppers$traffic_type<-as.numeric(clean_online_shoppers$traffic_type)
+clean_online_shoppers$visitor_type<-as.numeric(clean_online_shoppers$visitor_type)
+clean_online_shoppers$weekend<-as.numeric(clean_online_shoppers$weekend)
+str(clean_online_shoppers)
+```
+
+
+
+#We need to remove the class label from the dataset
+```{r}
+new_data<-clean_online_shoppers[,-18]
+new.class<-clean_online_shoppers[,"revenue"]
+head(new_data)
+```
+
+
+#normalize the dataset so that all the variables are on the same scale
+```{r}
+normalize<- function(x) {
+  return((x-min(x)) /(max(x)-min(x)))
+}
+
+```
+
+
+#normalizing specific variables and printing normalized data
+```{r}
+new_data$admni <-normalize(new_data$admin)
+new_data$admni_dur <-normalize(new_data$admin_dur)
+new_data$info <-normalize(new_data$info)
+new_data$info_dur <-normalize(new_data$info_dur)
+new_data$prod <-normalize(new_data$prod)
+new_data$prod_dur <-normalize(new_data$prod_dur)
+new_data$bouncerates <-normalize(new_data$bouncerates)
+new_data$exitrates <-normalize(new_data$exitrates)
+new_data$pagevalues<-normalize(new_data$pagevalues)
+new_data$specialday<-normalize(new_data$specialday)
+new_data$month<-normalize(new_data$month)
+new_data$ops_systems<-normalize(new_data$ops_systems)
+new_data$browser<-normalize(new_data$browser)
+new_data$region<-normalize(new_data$region)
+new_data$traffic_type<-normalize(new_data$traffic_type)
+new_data$visitor_type<-normalize(new_data$visitor_type)
+new_data$weekend<-normalize(new_data$weekend)
+head(new_data)
+```
+
+
+#Applying the K-means clustering algorithm with no. of centroids(k)=7
+```{r}
+
+result<- kmeans(new_data,7, nstart=50) 
+result
+
+```
+
+
+
+#Previewing the no. of records in each cluster
+```{r}
+result$size
+```
+
+
+#Installing packages
+```{r}
+library(fpc)
+library(dbscan)
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("kassambara/factoextra")
+library(factoextra)
+```
+
+
+#Installing the package
+```{r}
+#install.packages("factoextra")
+```
+
+#visualizing the data with k=7
+```{r}
+library(factoextra)
+fviz_cluster(result, data=new_data,ggtheme =theme_bw())
+
+```
+
+
+
+#Determining the optimal number of clusters
+#Using silhoutte method
+install.packages("cluster")
+
+
+#Visualizing the optimal number of k
+```{r}
+library(cluster)
+library(NbClust)
+fviz_nbclust(x=new_data, FUNcluster=kmeans, method ="silhouette")
+```
+#We observe that 2 clusters are the optimal clusters
+
+
+
+#kmeans with optimal clusters(2)
+```{r}
+new_datak2<-kmeans(new_data, 2, nstart=50)
+new_datak2
+```
+
+#Visualize with 2 clusters
+```{r}
+fviz_cluster(new_datak2, data=new_data, ggtheme=theme_bw())
+
+```
+#Observations on kmeans: we observe that it is very easy to implement. When we applied 7 clusters it was difficult to distinguish the clusters, but when we calculated the optimal value of k,its very clear the datapoints of each cluster. We conclude that based on this the online customers have been clustered into 2 groups/clusters. 
+ 
+
+#b)Implementing unsupervised learning using Hierachical clustering
+Hierarchical clustering builds a hierarchy of clusters i.e. tree-type structure based on hierarchy.There are two types: Agglomerative and Divisive.
+
+Advantages
+
+#We do not need to specify the number of clusters required for the algorithm.
+#Hierarchical clustering outputs a hierarchy, ie a structure that is more informative than the unstructured set of flat clusters returned by k-means.
+#It is also easy to implement.
+
+Below are the limitations of the hierarchical clustering technique;
+
+#There is no mathematical objective for Hierarchical clustering.
+#High space and time complexity for Hierarchical clustering. Hence this clustering algorithm cannot be used when we have huge data
+
+
+#Installing foreign
+install.packages("foreign")
+
+
+#loading the library
+```{r}
+library(foreign)
+```
+
+
+
+#Before hierarchical clustering, we will compute some descriptive statistics
+```{r}
+desc_stats <- data.frame(
+  Min = apply(new_data, 2, min),    # minimum
+  Med = apply(new_data, 2, median), # median
+  Mean = apply(new_data, 2, mean),  # mean
+  SD = apply(new_data, 2, sd),      # Standard deviation
+  Max = apply(new_data, 2, max)     # Maximum
+)
+desc_stats <- round(desc_stats, 1)
+head(desc_stats)
+```
+#We note that admnin duaration has high mean and maximum value compared to other variables. 
+#we therefore need to standardize the variables(i.e., scaled) to make them comparable. this is
+# transforming the variables such that they have mean zero and standard deviation one. 
+
+
+#Scaling the data
+```{r}
+new_data <- scale(new_data)
+head(new_data)
+```
+
+
+#We will use the R function hclust() for hierarchical clustering
+#First we use the dist() function to compute the Euclidean distance between observations, 
+#d will be the first argument in the hclust() function dissimilarity matrix
+
+```{r}
+d <- dist(new_data, method = "euclidean")
+
+```
+
+#We then hierarchical clustering using the Ward's method
+```{r}
+res.hc <- hclust(d, method = "ward.D2" )
+
+```
+
+#plot the obtained dendrogram
+```{r}
+plot(res.hc, cex = 0.6, hang = -1)
+```
+#Observations of hierachical clustering: This algorithim has limitations with huge data. As is it is very difficult to identify which variables are in what cluster and how variables are clustered. Based on the dendrogram, we should have at least 10 clusters yet when we used kmeans, we established the optimal numers of clusters are 2. You get very different results with each approach. Though both are very easy to implement.
+
+
+
+#c)Implementing using DBSCAN
+
+DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a type of clustering algorithm that focuses more on the proximity and density of observations to form clusters. This algorithm is commonly used to identify clusters of any shape in a data set containing noise and outliers. 
+
+The algorithim is not sensitive to outliers/noise, its is therefore the best for our dataset as it had many outliers.It is also applied in customer segmentation problem and this study is one of those. 
+
+Limitations
+#It does not work well when dealing with clusters of varying densities.
+#It also does not work well with high dimensionality data.
+
+
+# Importing the required package
+install.packages("dbscan")
+
+
+# Loading the required library
+```{r}
+library(dbscan)
+```
+
+#Determining the optimal value of eps
+```{r}
+kNNdistplot(new_data, k = 3)
+abline(h=3.2, col = "red", lty=2)
+
+```
+#We note that the optimal value of eps is 3.2
+
+
+#Applying our DBSCAN algorithm
+#We want minimum 4 points with in a distance of eps(0.4)
+
+```{r}
+db <- dbscan(new_data, eps = 0.4, minPts = 4)
+print(db)
+```
+
+
+#We also plot our clusters as shown
+#The dataset and cluster method of dbscan is used to plot the clusters.
+```{r}
+hullplot(new_data,db$cluster)
+```
+#From this we observe that the clusters have been 2 components leaving ot the noisy data.
+
+
+**6)Challenge the solution**
+Having applied the 3 algorithim approaches, this gave us a feel of how the results of each approach turned out. We believe DBSCAN and kmeeans with optimal value of k did a good job in clustering the customer data into 2 clusters. 
+We were able to achieve the grouping of  data points into distinct non-overlapping subgroups. 
+
+
+**7)Follow up questions**
+1. Did we have the right data? Yes, we had the right data.
+2. what could improve? The hierachical clustering was not able to bring out the insights the variables in each cluster.
+
+
